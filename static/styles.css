@@ -1,0 +1,28 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-image: url("https://media.discordapp.net/attachments/1393213901973491812/1413216251798618192/04.jpg?ex=68bc7132&is=68bb1fb2&hm=536589b1c77c3ac2cee6cc85484285e6989a1f56f3ab523e79f45b55be8fa761");
+    
+    background-size: 100% 360%;
+    background-position: center;
+
+    color: #ffffff
+}
+
+.body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.centeredText {
+    padding-top: 1vh;
+    text-align: center;
+}

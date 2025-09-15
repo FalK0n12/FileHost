@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>FileHost</title>
+</head>
+<body class="background">
+    <div class="centeredText">
+        <h1>File Host</h1>
+    </div>
+    <div class="body">
+        <form action="/Upload" method="POST" enctype="multipart/form-data">
+            <input type="file" name = "File" placeholder="file">
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+    <ol>
+    {% for item in ITEMS %}
+        <li>{{ item }}</li>
+    {% endfor %}
+    </ol>
+</body>
+</html>
