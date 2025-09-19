@@ -4,22 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            background-image: url("{{ url_for('static', filename=background) }}") !important;
+        }
+    </style>
     <title>FileHost</title>
 </head>
-<body class="background">
-    <div class="centeredText">
-        <h1>File Host</h1>
-    </div>
-    <div class="body">
-        <form action="/Upload" method="POST" enctype="multipart/form-data">
-            <input type="file" name = "File" placeholder="file">
-            <button type="submit">Upload</button>
+<body>
+    <h1 class="centeredText"><a href="http://127.0.0.1:5000/">File Host</a></h1>
+    <div class="buttons">
+        <form action="/Upload" method="POST" enctype="multipart/form-data" id="uploadForm">
+            <div class="file-upload-section">
+                <div class="file-input-wrapper">
+                    <input type="file" name="File" id="fileInput" class="file-input" accept="*/*">
+                    <label for="fileInput" class="file-input-button">
+                        <span class="icon">📁</span>Choose File
+                    </label>
+                </div>
+                
+                <div class="file-info" id="fileInfo">
+                    <span class="file-placeholder">No file selected</span>
+                </div>
+                
+                <button type="submit" class="upload-button" id="uploadBtn" disabled>
+                    <span class="icon">📤</span>Upload
+                </button>
+            </div>
         </form>
     </div>
+    {% if filename %}
+        <h2 class="centeredText">
+            Share: <a href="http://127.0.0.1:5000/download/{{ filename }}">http://127.0.0.1:5000/download/{{ filename }}</a>
+        </h2>
+    {% endif %}
     <ol>
     {% for item in ITEMS %}
-        <li>{{ item }}</li>
+        <li><a href="http://127.0.0.1:5000/download/{{ item }}">{{ item }}</a></li>
     {% endfor %}
     </ol>
+
+    {% if ERROR %}
+        <script>
+            alert('File already exists! Please choose a different file or rename it.');
+        </script>
+    {% endif %}
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const uploadBtn = document.getElementById('uploadBtn');
+
+        fileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            
+            if (file) {
+                const fileSize = formatFileSize(file.size);
+                fileInfo.classList.add('has-file');
+                fileInfo.innerHTML = `
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">(${fileSize})</span>
+                `;
+                uploadBtn.disabled = false;
+            } else {
+                fileInfo.classList.remove('has-file');
+                fileInfo.innerHTML = '<span class="file-placeholder">No file selected</span>';
+                uploadBtn.disabled = true;
+            }
+        });
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
 </body>
 </html>
