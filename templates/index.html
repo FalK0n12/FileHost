@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/png" sizes="128x128" href="{{ url_for('static', filename='/favicon-64x64.png') }}">
     <style>
         body {
             background-image: url("{{ url_for('static', filename=background) }}") !important;
@@ -33,16 +34,54 @@
             </div>
         </form>
     </div>
-    {% if filename %}
-        <h2 class="centeredText">
-            Share: <a href="http://127.0.0.1:5000/download/{{ filename }}">http://127.0.0.1:5000/download/{{ filename }}</a>
-        </h2>
+    {% if FILES %}
+    <div class="files-section">
+        <div class="files-container">
+            <div class="files-header">
+                <h2>📁 Uploaded Files</h2>
+                <p class="last-updated">Last Updated: {{ last_updated }}</p>
+            </div>
+            
+            <div class="files-grid">
+                {% for file in FILES %}
+                <div class="file-card">
+                    <div class="file-content">
+                        <a href="http://127.0.0.1:5000/download/{{ file.name }}" class="file-link">
+                            <div class="file-icon">
+                                {% if file.extension in ['.exe', '.msi'] %}
+                                    🔧
+                                {% elif file.extension in ['.zip', '.rar', '.7z'] %}
+                                    📦
+                                {% elif file.extension in ['.txt', '.doc', '.docx', '.pdf'] %}
+                                    📄
+                                {% elif file.extension in ['.jpg', '.png', '.gif', '.webp'] %}
+                                    🖼️
+                                {% elif file.extension in ['.mp4', '.avi', '.mkv'] %}
+                                    🎬
+                                {% elif file.extension in ['.mp3', '.wav', '.flac'] %}
+                                    🎵
+                                {% else %}
+                                    📄
+                                {% endif %}
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">{{ file.name }}</div>
+                                <div class="file-details">
+                                    <span class="file-size">{{ file.size }}</span>
+                                    <span class="file-date">{{ file.date }}</span>
+                                </div>
+                            </div>
+                        </a>
+                        <button onclick="copyToClipboard('http://127.0.0.1:5000/download/{{ file.name }}', this)" class="copy-button" title="Copy download link">
+                            📋
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
     {% endif %}
-    <ol>
-    {% for item in ITEMS %}
-        <li><a href="http://127.0.0.1:5000/download/{{ item }}">{{ item }}</a></li>
-    {% endfor %}
-    </ol>
 
     {% if ERROR %}
         <script>
@@ -80,6 +119,50 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
+        
+        function copyToClipboard(url, buttonElement) {
+            navigator.clipboard.writeText(url).then(function() {
+                const originalEmoji = buttonElement.innerHTML;
+                const originalTitle = buttonElement.title;
+                
+                buttonElement.innerHTML = '✓';
+                buttonElement.title = 'Copied!';
+                buttonElement.classList.add('copied');
+                
+                setTimeout(() => {
+                    buttonElement.innerHTML = originalEmoji;
+                    buttonElement.title = originalTitle;
+                    buttonElement.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    const originalEmoji = buttonElement.innerHTML;
+                    const originalTitle = buttonElement.title;
+                    
+                    buttonElement.innerHTML = '✓';
+                    buttonElement.title = 'Copied!';
+                    buttonElement.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        buttonElement.innerHTML = originalEmoji;
+                        buttonElement.title = originalTitle;
+                        buttonElement.classList.remove('copied');
+                    }, 2000);
+                } catch (fallbackErr) {
+                    alert('Could not copy link. Please copy manually: ' + url);
+                }
+                
+                document.body.removeChild(textArea);
+            });
+        }
     </script>
+    <br>
 </body>
 </html>

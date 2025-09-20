@@ -1,11 +1,14 @@
 from flask import Flask, request, render_template, send_from_directory
 import os
 from datetime import datetime
+import time
+import math
 
 app = Flask(__name__)
 
 fileDirectory = os.path.join(os.getcwd(), "files")
 os.makedirs(fileDirectory, exist_ok=True)
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024 * 1024
 
 backgrounds = ["02.jpg", "04.jpg", "23.jpg", "37.jpg"]
 
@@ -14,15 +17,51 @@ def get_current_background():
     background_index = current_hour % len(backgrounds)
     return backgrounds[background_index]
 
+def get_file_info(filename):
+    filepath = os.path.join(fileDirectory, filename)
+    if os.path.exists(filepath):
+        stat = os.stat(filepath)
+        size_bytes = stat.st_size
+        modified_time = datetime.fromtimestamp(stat.st_mtime)
+        
+        # Format file size
+        if size_bytes == 0:
+            size_str = "0 B"
+        else:
+            size_names = ["B", "KB", "MB", "GB", "TB"]
+            i = int(math.floor(math.log(size_bytes, 1024)))
+            p = math.pow(1024, i)
+            size_str = f"{round(size_bytes / p, 1)} {size_names[i]}"
+        
+        return {
+            'name': filename,
+            'size': size_str,
+            'date': modified_time.strftime('%d/%m/%Y %H:%M'),
+            'extension': os.path.splitext(filename)[1].lower()
+        }
+    return None
+
+def get_files_with_info():
+    items = os.listdir(fileDirectory)
+    files_info = []
+    for item in items:
+        info = get_file_info(item)
+        if info:
+            files_info.append(info)
+    files_info.sort(key=lambda x: datetime.strptime(x['date'], '%d/%m/%Y %H:%M'), reverse=True)
+    return files_info
+
 @app.route("/")
 def Index():
-    items = os.listdir(fileDirectory)
+    files_info = get_files_with_info()
     current_bg = get_current_background()
-    return render_template('index.html', ITEMS=items, background=current_bg)
+    last_updated = datetime.now().strftime('%d/%m/%Y %H:%M GMT%z')
+    return render_template('index.html', FILES=files_info, background=current_bg, last_updated=last_updated)
 
 @app.route("/Upload", methods=["GET","POST"])
 def Upload():
     current_bg = get_current_background()
+    last_updated = datetime.now().strftime('%d/%m/%Y %H:%M GMT%z')
     if request.method == "POST":
         if "File" not in request.files:
             return "No file part"
@@ -31,14 +70,15 @@ def Upload():
             return "No selected file"
         items = os.listdir(fileDirectory)
         if file.filename in items:
-            return render_template('index.html', ITEMS=items, ERROR="error", background=current_bg)
+            files_info = get_files_with_info()
+            return render_template('index.html', FILES=files_info, ERROR="error", background=current_bg, last_updated=last_updated)
         filepath = os.path.join(fileDirectory, file.filename)
         file.save(filepath)
-        items = os.listdir(fileDirectory)
-        return render_template('index.html', ITEMS=items, filename=file.filename, background=current_bg)
+        files_info = get_files_with_info()
+        return render_template('index.html', FILES=files_info, filename=file.filename, background=current_bg, last_updated=last_updated)
     else:
-        items = os.listdir(fileDirectory)
-        return render_template('index.html', ITEMS=items, background=current_bg)
+        files_info = get_files_with_info()
+        return render_template('index.html', FILES=files_info, background=current_bg, last_updated=last_updated)
     
 @app.route("/download/<fileName>")
 def Download(fileName: str):
